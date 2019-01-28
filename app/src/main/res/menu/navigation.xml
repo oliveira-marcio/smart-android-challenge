@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/action_exercise_1"
+        android:icon="@android:drawable/ic_dialog_info"
+        android:title="@string/title_exercise_1"/>
+
+    <item
+        android:id="@+id/action_exercise_2"
+        android:icon="@android:drawable/ic_dialog_info"
+        android:title="@string/title_exercise_2"/>
+
+    <item
+        android:id="@+id/action_exercise_3"
+        android:icon="@android:drawable/ic_dialog_info"
+        android:title="@string/title_exercise_3"/>
+
+    <item
+        android:id="@+id/action_exercise_4"
+        android:icon="@android:drawable/ic_dialog_info"
+        android:title="@string/title_exercise_4"/>
+
+</menu>
