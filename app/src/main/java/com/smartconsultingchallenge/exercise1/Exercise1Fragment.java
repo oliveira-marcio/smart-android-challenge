@@ -1,4 +1,4 @@
-package com.smartconsultingchallenge;
+package com.smartconsultingchallenge.exercise1;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -9,9 +9,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-public class Exercise3Fragment extends Fragment {
+import com.smartconsultingchallenge.R;
 
-    public Exercise3Fragment() {
+public class Exercise1Fragment extends Fragment {
+
+    public Exercise1Fragment() {
 
     }
 
@@ -21,7 +23,7 @@ public class Exercise3Fragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_exercise, container, false);
 
         TextView message = view.findViewById(R.id.message);
-        message.setText(R.string.title_exercise_3);
+        message.setText(R.string.title_exercise_1);
 
         return view;
     }

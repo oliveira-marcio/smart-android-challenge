@@ -4,6 +4,11 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 
+import com.smartconsultingchallenge.exercise1.Exercise1Fragment;
+import com.smartconsultingchallenge.exercise2.Exercise2Fragment;
+import com.smartconsultingchallenge.exercise3.Exercise3Fragment;
+import com.smartconsultingchallenge.exercise4.Exercise4Fragment;
+
 public class ExerciseAdapter extends FragmentPagerAdapter {
 
     final int PAGE_COUNT = 4;

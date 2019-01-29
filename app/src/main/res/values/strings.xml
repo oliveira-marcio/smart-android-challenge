@@ -3,4 +3,7 @@
     <string name="title_exercise_2">Exercise 2</string>
     <string name="title_exercise_3">Exercise 3</string>
     <string name="title_exercise_4">Exercise 4</string>
+    <string name="exercise3_label_regular">Normal Text</string>
+    <string name="exercise3_label_numbers">Numbers Only</string>
+    <string name="exercise3_label_uppercase">UPPERCASE</string>
 </resources>
