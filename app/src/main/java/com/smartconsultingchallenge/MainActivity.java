@@ -53,8 +53,8 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     navigation.getMenu().getItem(0).setChecked(false);
                 }
-                navigation.getMenu().getItem(position).setChecked(true);
                 mPrevMenuItem = navigation.getMenu().getItem(position);
+                mPrevMenuItem.setChecked(true);
             }
 
             @Override
