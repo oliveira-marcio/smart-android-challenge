@@ -5,6 +5,13 @@
 
     <include layout="@layout/toolbar" />
 
+    <ImageView
+        android:id="@+id/header_image"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:elevation="@dimen/header_image_elevation"
+        android:scaleType="centerCrop" />
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recycler_view"
 

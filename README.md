@@ -59,11 +59,22 @@ The app should display a website, set up in the Gradle file.
 
 ### Exercise 1
 
-To be implemented
+To be implemented.
 
 ### Exercise 2
 
-To be implemented
+
+The layout uses `FrameLayout`, so we can place `Views` on top of each other.
+
+The `RecyclerView` has a custom adapter that generates 50 numbered itens.
+
+A regular `ImageView` will work as a header for `RecyclerView` where it's placed above `RecyclerView` and under `Toolbar`. The image will be fetched from a provided URL using [Picasso](http://square.github.io/picasso/) library.
+
+After `Toolbar` height is retrieved, the maximum scroll up will be equal to header height minus `Toolbar` height, so it'll be scrolled up until it's totally covered by `Toolbar`. And the maximum scroll down is up to its original position.
+
+Also, the first item of list will have an offset equal to header height, so it won't be covered by it.
+
+The `Toolbar` transparency is set proportionally by current header translation over maximum translation.
 
 ### Exercise 3
 

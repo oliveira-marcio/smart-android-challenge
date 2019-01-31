@@ -4,8 +4,8 @@
     android:layout_height="wrap_content">
 
     <!--
-    This container is required since it's not possible to manipulate external FrameLayout because
-    it's the root item view of RecyclerView
+    This container is required since it's not possible to manipulate external FrameLayout once
+    it's the RecyclerView root item view
     -->
     <FrameLayout
         android:id="@+id/container"
