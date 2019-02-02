@@ -8,6 +8,7 @@ import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.smartconsultingchallenge.exercise1.database.DatabaseHelper;
 import com.smartconsultingchallenge.exercise1.network.PostalService;
 
 import java.io.BufferedReader;
@@ -38,23 +39,27 @@ public class Repository {
 
     private final Context mContext;
     private final PostalService mPostalService;
+    private final DatabaseHelper mDb;
+
     private CompositeDisposable mDisposable = new CompositeDisposable();
 
     private MutableLiveData<String> mResults = new MutableLiveData<>();
 
-    private String resultsTemp = "";
 
-    public Repository(Context context, PostalService service) {
+    public Repository(Context context, PostalService service, DatabaseHelper db) {
         mContext = context;
         mPostalService = service;
+        mDb = db;
+
         fetchAndSyncPostalCodes();
     }
 
     public synchronized static Repository getInstance(Context context,
-                                                      PostalService service) {
+                                                      PostalService service,
+                                                      DatabaseHelper db) {
         if (sInstance == null) {
             synchronized (LOCK) {
-                sInstance = new Repository(context, service);
+                sInstance = new Repository(context, service, db);
             }
         }
         return sInstance;
@@ -64,9 +69,15 @@ public class Repository {
         return mResults;
     }
 
+    private int getTotalPostals() {
+        return mDb.getTotalRows();
+    }
+
     public void fetchAndSyncPostalCodes() {
+        final int BUFFER_RESULTS = 1000;
+
         // TODO: Just for testing pourposes. REMOVE!!
-        setSyncResult(false, null);
+//        setSyncResult(false, null);
         if (dataIsReady()) {
             // TODO: No need for that on final version. REMOVE!
             mResults.postValue("data alredeady loaded");
@@ -81,9 +92,9 @@ public class Repository {
 
         setStartSync();
 
+        mDb.deleteAllRows();
+
         mDisposable.add(mPostalService.getPostalCodes()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
                 .flatMapObservable(new Function<ResponseBody, ObservableSource<String>>() {
                     @Override
                     public ObservableSource<String> apply(final ResponseBody responseBody) {
@@ -95,6 +106,7 @@ public class Repository {
                                         Charset.forName("UTF-8")
                                 );
                                 BufferedReader reader = new BufferedReader(inputStreamReader);
+                                reader.readLine(); // discard csv header
                                 while (reader.ready()) {
                                     emitter.onNext(reader.readLine());
                                 }
@@ -103,16 +115,26 @@ public class Repository {
                         });
                     }
                 })
-                .buffer(300)
-                .subscribeWith(new DisposableObserver<List<String>>() {
-
-                    // TODO: REMOVE THIS AND RESULTS TEMP
-                    private int n = 0;
-
+                .buffer(BUFFER_RESULTS)
+                .flatMap(new Function<List<String>, ObservableSource<String>>() {
                     @Override
-                    public void onNext(List<String> s) {
-                        Log.v(LOG, "" + s.size());
-                        resultsTemp += "\n" + (++n) + ") " + s.size();
+                    public ObservableSource<String> apply(final List<String> results) {
+                        return Observable.create(new ObservableOnSubscribe<String>() {
+                            @Override
+                            public void subscribe(ObservableEmitter<String> emitter) {
+                                Log.v(LOG, "Inserting: " + results.size() + " rows.");
+                                mDb.bulkInsert(results);
+                                emitter.onComplete();
+                            }
+                        });
+                    }
+                })
+                .subscribeOn(Schedulers.computation())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableObserver<String>() {
+                    @Override
+                    public void onNext(String results) {
+
                     }
 
                     @Override
@@ -126,7 +148,8 @@ public class Repository {
                     public void onComplete() {
                         Log.v(LOG, "COMPLETE");
                         setSyncResult(true, null);
-                        mResults.postValue(resultsTemp);
+                        mResults.postValue("COMPLETE");
+                        Log.v(LOG, "" + getTotalPostals());
                     }
                 })
         );
