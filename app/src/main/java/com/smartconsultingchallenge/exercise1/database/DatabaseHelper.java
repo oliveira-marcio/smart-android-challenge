@@ -53,12 +53,24 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return sInstance;
     }
 
-    public int getTotalRows() {
+    public Cursor queryData(String selection, String[] selectionArgs) {
+        String[] projection = {
+                COLUMN_POSTAL_CODE,
+                COLUMN_POSTAL_EXT_CODE,
+                COLUMN_LOCAL_NAME
+        };
+
         SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = db.query(TABLE_NAME, new String[]{_ID}, null, null, null, null, null);
-        int totalRows = cursor.getCount();
-        cursor.close();
-        return totalRows;
+        return db.query(
+                TABLE_NAME,
+                projection,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null,
+                null
+        );
     }
 
     public void deleteAllRows() {

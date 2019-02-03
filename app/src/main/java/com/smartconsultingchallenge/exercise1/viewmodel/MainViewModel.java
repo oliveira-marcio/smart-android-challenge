@@ -2,21 +2,21 @@ package com.smartconsultingchallenge.exercise1.viewmodel;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.ViewModel;
+import android.database.Cursor;
 
 import com.smartconsultingchallenge.exercise1.repository.Repository;
 
 public class MainViewModel extends ViewModel {
 
     private final Repository mRepository;
-    private LiveData<String> mResults;
+    private LiveData<Cursor> mResults;
 
     public MainViewModel(Repository repository) {
         mRepository = repository;
         mResults = mRepository.getResults();
     }
 
-    // TODO: Final version should return a Cursor
-    public LiveData<String> getResults() {
+    public LiveData<Cursor> getResults() {
         return mResults;
     }
 
@@ -28,13 +28,16 @@ public class MainViewModel extends ViewModel {
         return mRepository.getSyncStatus();
     }
 
-    public String getError() {
+    public String getSyncError() {
         return mRepository.getSyncError();
     }
 
     @Override
     protected void onCleared() {
         super.onCleared();
+        if (mResults.getValue() != null) {
+            mResults.getValue().close();
+        }
         mRepository.clear();
     }
 }

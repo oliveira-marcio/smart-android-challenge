@@ -3,6 +3,14 @@
     <string name="title_exercise_2">Exercise 2</string>
     <string name="title_exercise_3">Exercise 3</string>
     <string name="title_exercise_4">Exercise 4</string>
+
+    <string name="exercise1_search_hint">Search here…</string>
+    <string name="exercise1_loading_message">Sync will take a few minutes.\n\nPlease wait…</string>
+    <string name="exercise1_error_no_internet">No internet available</string>
+    <string name="exercise1_error_sync_fail">Error retrieving data.</string>
+    <string name="exercise1_clear_button">CLEAR</string>
+    <string name="exercise1_refresh_button">Refresh</string>
+
     <string name="exercise3_label_regular">Normal Text</string>
     <string name="exercise3_label_numbers">Numbers Only</string>
     <string name="exercise3_label_uppercase">UPPERCASE</string>

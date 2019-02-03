@@ -4,10 +4,12 @@ import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.smartconsultingchallenge.R;
 import com.smartconsultingchallenge.exercise1.database.DatabaseHelper;
 import com.smartconsultingchallenge.exercise1.network.PostalService;
 
@@ -43,7 +45,7 @@ public class Repository {
 
     private CompositeDisposable mDisposable = new CompositeDisposable();
 
-    private MutableLiveData<String> mResults = new MutableLiveData<>();
+    private MutableLiveData<Cursor> mDataResults = new MutableLiveData<>();
 
 
     public Repository(Context context, PostalService service, DatabaseHelper db) {
@@ -65,28 +67,32 @@ public class Repository {
         return sInstance;
     }
 
-    public LiveData<String> getResults() {
-        return mResults;
+    public LiveData<Cursor> getResults() {
+        return mDataResults;
     }
 
-    private int getTotalPostals() {
-        return mDb.getTotalRows();
-    }
-
+    /**
+     * This method will sync data with server only once or in case of sync fail.
+     * <p>
+     * In case of local data already present (and successfully synced), a Cursor will be loaded on
+     * mDataResults.
+     * <p>
+     * Otherwise, sync will start and results will be parsed and bulk inserted in database on each
+     * 1000 results. In the end, the Cursor will be loaded.
+     */
     public void fetchAndSyncPostalCodes() {
         final int BUFFER_RESULTS = 1000;
 
         // TODO: Just for testing pourposes. REMOVE!!
 //        setSyncResult(false, null);
         if (dataIsReady()) {
-            // TODO: No need for that on final version. REMOVE!
-            mResults.postValue("data alredeady loaded");
+            mDataResults.postValue(mDb.queryData(null, null));
             return;
         }
 
         if (!isNetworkConnected()) {
-            mResults.postValue(null);
-            setSyncResult(false, "No internet available");
+            mDataResults.postValue(null);
+            setSyncResult(false, mContext.getString(R.string.exercise1_error_no_internet));
             return;
         }
 
@@ -107,7 +113,10 @@ public class Repository {
                                 );
                                 BufferedReader reader = new BufferedReader(inputStreamReader);
                                 reader.readLine(); // discard csv header
+                                // TODO: FOR TESTING Pourposes. REMOVE this x var and condition!
+                                int x = 0;
                                 while (reader.ready()) {
+                                    if (x++ > 9) break;
                                     emitter.onNext(reader.readLine());
                                 }
                                 emitter.onComplete();
@@ -140,21 +149,23 @@ public class Repository {
                     @Override
                     public void onError(Throwable e) {
                         Log.v(LOG, e.getMessage());
-                        setSyncResult(false, "Error retrieving data.");
-                        mResults.postValue(null);
+                        setSyncResult(false, mContext.getString(R.string.exercise1_error_sync_fail));
+                        mDataResults.postValue(null);
                     }
 
                     @Override
                     public void onComplete() {
-                        Log.v(LOG, "COMPLETE");
+                        Log.v(LOG, "SYNC COMPLETED");
                         setSyncResult(true, null);
-                        mResults.postValue("COMPLETE");
-                        Log.v(LOG, "" + getTotalPostals());
+                        mDataResults.postValue(mDb.queryData(null, null));
                     }
                 })
         );
     }
 
+    /**
+     * Check internet availability
+     */
     private boolean isNetworkConnected() {
         boolean isConected;
         ConnectivityManager conectivtyManager = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -162,29 +173,18 @@ public class Repository {
         return isConected;
     }
 
+    /**
+     * Check success sync status (true or false)
+     */
     private boolean dataIsReady() {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
         return sp.getBoolean(SYNC_SYNCED_KEY, false);
     }
 
-    public String getSyncError() {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
-        return sp.getString(SYNC_ERROR_KEY, null);
-    }
-
-    private void setStartSync() {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
-        SharedPreferences.Editor spe = sp.edit();
-        spe.putBoolean(SYNC_STATUS_KEY, true);
-        spe.apply();
-    }
-
-    public boolean getSyncStatus() {
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
-        boolean result = sp.getBoolean(SYNC_STATUS_KEY, false);
-        return result;
-    }
-
+    /**
+     * Set sync success status to true or false and corresponding sync error message
+     * Also set syncing status to false to indicate it's not running anymore.
+     */
     private void setSyncResult(boolean syncStatus, String errorMessage) {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
         SharedPreferences.Editor spe = sp.edit();
@@ -192,6 +192,33 @@ public class Repository {
         spe.putString(SYNC_ERROR_KEY, errorMessage);
         spe.putBoolean(SYNC_STATUS_KEY, false);
         spe.apply();
+    }
+
+    /**
+     * Get sync error message
+     */
+    public String getSyncError() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
+        return sp.getString(SYNC_ERROR_KEY, null);
+    }
+
+    /**
+     * Set syncing status to true to indicate it's running
+     */
+    private void setStartSync() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
+        SharedPreferences.Editor spe = sp.edit();
+        spe.putBoolean(SYNC_STATUS_KEY, true);
+        spe.apply();
+    }
+
+    /**
+     * Get syncing status to indicate if it's still running
+     */
+    public boolean getSyncStatus() {
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(mContext);
+        boolean result = sp.getBoolean(SYNC_STATUS_KEY, false);
+        return result;
     }
 
     public void clear() {
