@@ -20,6 +20,10 @@ public class MainViewModel extends ViewModel {
         return mResults;
     }
 
+    public void filterData(String input){
+        mRepository.setFilteredResults(input);
+    }
+
     public void syncData() {
         mRepository.fetchAndSyncPostalCodes();
     }

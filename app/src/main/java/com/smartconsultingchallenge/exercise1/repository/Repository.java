@@ -16,6 +16,7 @@ import com.smartconsultingchallenge.exercise1.network.PostalService;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 
 import io.reactivex.Observable;
@@ -28,6 +29,10 @@ import io.reactivex.functions.Function;
 import io.reactivex.observers.DisposableObserver;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.ResponseBody;
+
+import static com.smartconsultingchallenge.exercise1.database.DatabaseContract.PostalEntry.COLUMN_LOCAL_NAME;
+import static com.smartconsultingchallenge.exercise1.database.DatabaseContract.PostalEntry.COLUMN_POSTAL_CODE;
+import static com.smartconsultingchallenge.exercise1.database.DatabaseContract.PostalEntry.COLUMN_POSTAL_EXT_CODE;
 
 public class Repository {
 
@@ -86,7 +91,7 @@ public class Repository {
         // TODO: Just for testing pourposes. REMOVE!!
 //        setSyncResult(false, null);
         if (dataIsReady()) {
-            mDataResults.postValue(mDb.queryData(null, null));
+            setFilteredResults(null);
             return;
         }
 
@@ -157,10 +162,84 @@ public class Repository {
                     public void onComplete() {
                         Log.v(LOG, "SYNC COMPLETED");
                         setSyncResult(true, null);
-                        mDataResults.postValue(mDb.queryData(null, null));
+                        setFilteredResults(null);
                     }
                 })
         );
+    }
+
+    //TODO: Remove Logs
+    //TODO: Handle empty results on UI
+    //TODO: When there's only one numeric, search in both
+    public void setFilteredResults(String input) {
+        if (input == null || input.isEmpty()) {
+            mDataResults.postValue(mDb.queryData(null, null));
+            return;
+        }
+
+        String[] terms = input.trim().toLowerCase().split("\\s+");
+        String postalCode = "";
+        String postalExtCode = "";
+        List<String> localNames = new ArrayList<>();
+
+        for (String term : terms) {
+            if (term.matches("\\d+-\\d+")) {
+                if (!(postalCode.isEmpty() && postalExtCode.isEmpty())) {
+                    localNames.add(term);
+                }
+                postalCode = term.split("-")[0];
+                postalExtCode = term.split("-")[1];
+            } else if (term.matches("\\d+")) {
+                if (postalCode.isEmpty()) {
+                    postalCode = term;
+                    continue;
+                } else if (postalExtCode.isEmpty()) {
+                    postalExtCode = term;
+                } else {
+                    localNames.add(term);
+                }
+            } else {
+                localNames.add(term);
+            }
+        }
+
+        Log.v("TERM", terms.length + "");
+
+        StringBuilder queryBuilder = new StringBuilder();
+        List<String> queryValues = new ArrayList<>();
+        final String JOIN = " AND ";
+
+        if (!postalCode.isEmpty()) {
+            queryBuilder.append("lower(" + COLUMN_POSTAL_CODE + ") LIKE ?");
+            queryBuilder.append(JOIN);
+            queryValues.add("%" + postalCode + "%");
+        }
+
+        if (!postalExtCode.isEmpty()) {
+            queryBuilder.append("lower(" + COLUMN_POSTAL_EXT_CODE + ") LIKE ?");
+            queryBuilder.append(JOIN);
+            queryValues.add("%" + postalExtCode + "%");
+        }
+
+        for (String localName : localNames) {
+            queryBuilder.append("lower(" + COLUMN_LOCAL_NAME + ") LIKE ?");
+            queryBuilder.append(JOIN);
+            queryValues.add("%" + localName + "%");
+        }
+
+        queryBuilder.delete(queryBuilder.length() - JOIN.length(), queryBuilder.length() - 1);
+
+        mDataResults.postValue(mDb.queryData(
+                queryBuilder.toString(),
+                queryValues.toArray(new String[queryValues.size()]))
+        );
+
+        String[] values = queryValues.toArray(new String[queryValues.size()]);
+
+        Log.v("TERM", queryBuilder.toString());
+        for (String value : values) {
+            Log.v("TERM", value);
+        }
     }
 
     /**
