@@ -142,9 +142,23 @@ public class Exercise1Fragment extends Fragment {
         }
 
         mLoadingView.setVisibility(View.GONE);
-        mDataView.setVisibility(isSuccess ? View.VISIBLE : View.GONE);
-        mEmptyView.setVisibility(isSuccess ? View.GONE : View.VISIBLE);
-        mErrorView.setText(errorMessage);
+
+        if (isSuccess) {
+            // Sync success. Hide empty view and show data
+            mDataView.setVisibility(View.VISIBLE);
+            mEmptyView.setVisibility(View.GONE);
+        } else if (errorMessage == null) {
+            // Data not found because search parameters. Only hide refresh button
+            mRefreshButon.setVisibility(View.GONE);
+            mEmptyView.setVisibility(View.VISIBLE);
+            mErrorView.setText(R.string.exercise1_error_search);
+        } else {
+            // Data not found because of sync error. Hide data view and display full error view
+            mDataView.setVisibility(View.GONE);
+            mRefreshButon.setVisibility(View.VISIBLE);
+            mEmptyView.setVisibility(View.VISIBLE);
+            mErrorView.setText(errorMessage);
+        }
     }
 
     @Override

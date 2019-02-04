@@ -88,8 +88,6 @@ public class Repository {
     public void fetchAndSyncPostalCodes() {
         final int BUFFER_RESULTS = 1000;
 
-        // TODO: Just for testing pourposes. REMOVE!!
-//        setSyncResult(false, null);
         if (dataIsReady()) {
             setFilteredResults(null);
             return;
@@ -118,10 +116,7 @@ public class Repository {
                                 );
                                 BufferedReader reader = new BufferedReader(inputStreamReader);
                                 reader.readLine(); // discard csv header
-                                // TODO: FOR TESTING Pourposes. REMOVE this x var and condition!
-                                int x = 0;
                                 while (reader.ready()) {
-                                    if (x++ > 9) break;
                                     emitter.onNext(reader.readLine());
                                 }
                                 emitter.onComplete();
@@ -168,9 +163,28 @@ public class Repository {
         );
     }
 
-    //TODO: Remove Logs
-    //TODO: Handle empty results on UI
-    //TODO: When there's only one numeric, search in both
+    /**
+     * Parse input string from search view and extract search terms to compose selection string for
+     * database query and filter results accordingly. If input string is empty, all data will be
+     * returned.
+     * <p>
+     * Database columns to be searched:
+     * - Postal code (correspond to first part of full postal code)
+     * - Postal Ext Code (correspond to last part of full postal code)
+     * - Local name
+     * <p>
+     * Rules to search:
+     * - Input string is splitted by spaces (don't matter how many spaces are between words)
+     * - If a term uses a valid postal code format (####-###), search each part in corresponding
+     * postal code column
+     * - If numeric terms are found, use the first 2 as a full postal code and search each one in
+     * corresponding postal code column. The remaining numeric terms will be searched in local name
+     * columm.
+     * - if only one numeric term is found try to search it in the first postal code column or in
+     * the second one
+     * - all other extracted terms will be searched in local name column
+     * - all terms will be searched together (using AND)
+     */
     public void setFilteredResults(String input) {
         if (input == null || input.isEmpty()) {
             mDataResults.postValue(mDb.queryData(null, null));
@@ -203,22 +217,25 @@ public class Repository {
             }
         }
 
-        Log.v("TERM", terms.length + "");
-
         StringBuilder queryBuilder = new StringBuilder();
         List<String> queryValues = new ArrayList<>();
         final String JOIN = " AND ";
 
         if (!postalCode.isEmpty()) {
-            queryBuilder.append("lower(" + COLUMN_POSTAL_CODE + ") LIKE ?");
-            queryBuilder.append(JOIN);
+            queryBuilder.append("(lower(" + COLUMN_POSTAL_CODE + ") LIKE ?");
             queryValues.add("%" + postalCode + "%");
-        }
 
-        if (!postalExtCode.isEmpty()) {
-            queryBuilder.append("lower(" + COLUMN_POSTAL_EXT_CODE + ") LIKE ?");
-            queryBuilder.append(JOIN);
-            queryValues.add("%" + postalExtCode + "%");
+            if (postalExtCode.isEmpty()) {
+                queryBuilder.append(" OR ");
+                queryBuilder.append("lower(" + COLUMN_POSTAL_EXT_CODE + ") LIKE ?)");
+                queryValues.add("%" + postalCode + "%");
+                queryBuilder.append(JOIN);
+            } else {
+                queryBuilder.append(JOIN);
+                queryBuilder.append("lower(" + COLUMN_POSTAL_EXT_CODE + ") LIKE ?)");
+                queryValues.add("%" + postalExtCode + "%");
+                queryBuilder.append(JOIN);
+            }
         }
 
         for (String localName : localNames) {
@@ -233,13 +250,6 @@ public class Repository {
                 queryBuilder.toString(),
                 queryValues.toArray(new String[queryValues.size()]))
         );
-
-        String[] values = queryValues.toArray(new String[queryValues.size()]);
-
-        Log.v("TERM", queryBuilder.toString());
-        for (String value : values) {
-            Log.v("TERM", value);
-        }
     }
 
     /**

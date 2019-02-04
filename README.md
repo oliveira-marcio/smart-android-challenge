@@ -3,7 +3,6 @@ By Márcio Souza de Oliveira
 
 ## The Challenge
 
-
 It is intended that the `WTest` app be implemented.
 
 The app should use _Bottom Navigation_ (bottom tabs) with each exercise on its own tab.
@@ -59,7 +58,27 @@ The app should display a website, set up in the Gradle file.
 
 ### Exercise 1
 
-To be implemented.
+When app starts, data is fetched from server using Retrofit (it's only done once or when it fails). Since the response is huge (>300.000 lines) I've opted to stream results in background using RxJava and buffer each 1000 lines to be inserted in database until the last line is fetched.
+
+Also, since data is in CSV format, it was necessary to manually parse each line and extract values using some RegEx (thanks to this [great solution](https://stackoverflow.com/questions/18893390/splitting-on-comma-outside-quotes) to split only in commas outside quote marks).
+
+About the database, I've ended up using regular `SQLiteDabase` and `SQLiteOpenHelper` classes because this exercise requires that results shouldn't be completely stored in the memory, so with these classes I could work with `Cursor` to extract data directly from database. Maybe a better solution could've be achieved by using the new [Paging Library](https://developer.android.com/topic/libraries/architecture/paging/) component, but I still didn't use it.
+
+When database is loaded, user can interact with data using search field to filter list. Again, I've used RxJava to take advantage of the _debounce_ feature where list is automatically refreshed while user types.
+
+The search filter follow these rules:
+- Input string is splitted by spaces (don't matter how many spaces are between words).
+- If a term uses a valid postal code format (`####-###`), each part is searched in corresponding postal code column.
+- If numeric terms are found, the first 2 is used as a full postal code and each one is searched in corresponding postal code column. The remaining numeric terms is searched in local name columm.
+- if only one numeric term is found it'll be searched in both postal code columns.
+- all other extracted terms is searched in local name column.
+- all terms are searched together (using AND).
+
+**OBS:** Accented characters aren't treated as regular ones by search in this release... :-(
+
+On other hand, uppercase characters are ignored... :-D
+
+About general architecture, I've tried to work with a **MVVM** pattern using a Repository to handle API and database manipulation while UI make all calls to its `ViewModel`. There are some depency injection with a `Injector` helper class.
 
 ### Exercise 2
 

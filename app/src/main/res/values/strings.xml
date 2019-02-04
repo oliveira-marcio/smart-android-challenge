@@ -8,6 +8,7 @@
     <string name="exercise1_loading_message">Sync will take a few minutes.\n\nPlease wait…</string>
     <string name="exercise1_error_no_internet">No internet available</string>
     <string name="exercise1_error_sync_fail">Error retrieving data.</string>
+    <string name="exercise1_error_search">No results found.</string>
     <string name="exercise1_clear_button">CLEAR</string>
     <string name="exercise1_refresh_button">Refresh</string>
 

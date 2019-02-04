@@ -20,7 +20,7 @@ public class MainViewModel extends ViewModel {
         return mResults;
     }
 
-    public void filterData(String input){
+    public void filterData(String input) {
         mRepository.setFilteredResults(input);
     }
 
