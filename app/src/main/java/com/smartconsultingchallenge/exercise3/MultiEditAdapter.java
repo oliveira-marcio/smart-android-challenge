@@ -2,7 +2,9 @@ package com.smartconsultingchallenge.exercise3;
 
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
 import android.text.InputFilter;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +14,7 @@ import com.smartconsultingchallenge.R;
 
 public class MultiEditAdapter extends RecyclerView.Adapter<MultiEditAdapter.MultiEditViewHolder> {
 
-    private final int ITEM_COUNT = 50;
+    private final String[] itemValues = new String[50];
 
     private int mLayouts[] = {
             R.layout.list_item_exercise3_regular,
@@ -30,11 +32,12 @@ public class MultiEditAdapter extends RecyclerView.Adapter<MultiEditAdapter.Mult
 
     @Override
     public void onBindViewHolder(@NonNull MultiEditViewHolder holder, int position) {
+        holder.editText.setText(itemValues[position]);
     }
 
     @Override
     public int getItemCount() {
-        return ITEM_COUNT;
+        return itemValues.length;
     }
 
     @Override
@@ -48,6 +51,22 @@ public class MultiEditAdapter extends RecyclerView.Adapter<MultiEditAdapter.Mult
         public MultiEditViewHolder(@NonNull View itemView, boolean isUpperCase) {
             super(itemView);
             editText = itemView.findViewById(R.id.edit_et);
+            editText.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+                }
+
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                    itemValues[getAdapterPosition()] = charSequence.toString();
+                }
+
+                @Override
+                public void afterTextChanged(Editable editable) {
+
+                }
+            });
 
             if (isUpperCase) {
                 editText.setFilters(new InputFilter[]{new InputFilter.AllCaps()});
